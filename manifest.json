@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "AI 求职工作流",
+  "version": "0.1.0",
+  "description": "AI 协同的求职决策工作流增强插件",
+  "permissions": ["sidePanel", "activeTab", "contextMenus", "storage", "scripting"],
+  "host_permissions": ["<all_urls>", "https://api.deepseek.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "打开 AI 求职工作流"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "lib/pdf.worker.min.js",
+        "lib/tesseract/tesseract.min.js",
+        "lib/tesseract/worker.min.js",
+        "lib/tesseract/tesseract-core.wasm.js",
+        "lib/tesseract/tesseract-core.wasm",
+        "lib/tesseract/tesseract-core-simd.wasm.js",
+        "lib/tesseract/tesseract-core-simd.wasm",
+        "lib/tesseract/tesseract-core-lstm.wasm.js",
+        "lib/tesseract/tesseract-core-lstm.wasm",
+        "lib/tesseract/tesseract-core-simd-lstm.wasm.js",
+        "lib/tesseract/tesseract-core-simd-lstm.wasm",
+        "lib/tessdata/chi_sim.traineddata",
+        "lib/tessdata/eng.traineddata"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

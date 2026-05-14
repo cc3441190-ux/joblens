@@ -1,0 +1,4 @@
+secrets.js
+node_modules/
+demo/**/node_modules/
+demo/**/dist/

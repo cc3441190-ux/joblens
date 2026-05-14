@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 求职工作流</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Job Copilot Design Tokens ── */
+:root {
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --bg: #FBFBFB;
+  --surface1: #F5F5F4; --surface2: #E7E5E4; --surface3: #D6D3D1;
+  --border: #E7E5E4; --border-visible: #D6D3D1;
+  --text1: #1C1917; --text2: #57534E; --text3: #78716C; --text4: #A8A29E;
+  --accent: #3B82F6; --accent-subtle: #EFF6FF; --accent-hover: #2563EB;
+  --warning: #F59E0B; --warning-subtle: #FFFBEB;
+  --risk: #F97316; --risk-subtle: #FFF7ED;
+  --radius: 8px; --radius-pill: 999px;
+  --grad-high: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+  --grad-med: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+  --grad-low: linear-gradient(135deg, #F5F5F4 0%, #E7E5E4 100%);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--font); background:var(--bg); color:var(--text1); font-size:13px; line-height:1.5; padding:12px; min-height:100vh; }
+
+/* ── Components ── */
+.card { background:var(--surface1); border:1px solid var(--border); border-radius:var(--radius); padding:12px; }
+input, textarea { width:100%; background:#fff; border:1px solid var(--border-visible); border-radius:var(--radius); padding:8px 12px; font-size:13px; font-family:var(--font); outline:none; color:var(--text1); }
+input:focus, textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,130,246,0.12); }
+input::placeholder, textarea::placeholder { color:var(--text4); }
+textarea { resize:vertical; }
+
+.btn-primary { display:block; width:100%; background:var(--accent); color:#fff; border:none; border-radius:var(--radius); padding:8px 16px; font-size:13px; font-weight:500; font-family:var(--font); cursor:pointer; transition:all 150ms; }
+.btn-primary:hover { filter:brightness(1.1); box-shadow:0 4px 12px rgba(59,130,246,0.3); }
+.btn-primary:disabled { opacity:0.4; cursor:not-allowed; }
+.btn-secondary { display:block; width:100%; background:#fff; color:var(--text2); border:1px solid var(--border-visible); border-radius:var(--radius); padding:6px 12px; font-size:12px; font-family:var(--font); cursor:pointer; transition:all 200ms; }
+.btn-secondary:hover { border-color:var(--accent); }
+.btn-ghost { background:none; border:none; color:var(--text4); font-size:11px; font-family:var(--font); cursor:pointer; padding:4px 0; text-decoration:underline; }
+.btn-ghost:hover { color:var(--accent); }
+.btn-danger { background:none; border:none; color:var(--text4); font-size:11px; font-family:var(--font); cursor:pointer; padding:4px 0; text-decoration:underline; }
+
+.tag { display:inline-flex; padding:2px 8px; border-radius:var(--radius-pill); font-size:10px; font-weight:500; }
+.tag-positive { background:var(--accent-subtle); color:#2563EB; }
+.tag-warning { background:var(--warning-subtle); color:#B45309; }
+.tag-risk { background:var(--risk-subtle); color:#C2410C; }
+.tag-neutral { background:var(--surface2); color:var(--text3); }
+.tag-delete { background:none; border:none; cursor:pointer; padding:0 0 0 4px; color:inherit; opacity:0.7; font-size:12px; line-height:1; }
+.tags { display:flex; flex-wrap:wrap; gap:4px; }
+
+.stat-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.stat-card { border-radius:var(--radius); padding:12px; text-align:center; border:1px solid var(--border); }
+.stat-card .num { font-size:24px; font-weight:700; }
+.stat-card .lbl { font-size:10px; margin-top:2px; }
+.stat-high { background:var(--grad-high); } .stat-high .num { color:#2563EB; } .stat-high .lbl { color:#2563EB; opacity:.8; }
+.stat-medium { background:var(--grad-med); } .stat-medium .num { color:#B45309; } .stat-medium .lbl { color:#B45309; opacity:.8; }
+.stat-low { background:var(--grad-low); } .stat-low .num { color:var(--text3); } .stat-low .lbl { color:var(--text3); opacity:.8; }
+
+.stars { display:inline-flex; align-items:center; gap:4px; background:var(--accent-subtle); color:#2563EB; padding:3px 10px; border-radius:var(--radius-pill); font-size:10px; font-weight:500; }
+
+.skeleton { background:var(--surface2); border-radius:4px; animation:pulse 1.5s ease-in-out infinite; }
+.skeleton.w-75 { width:75%; height:14px; }
+.skeleton.w-50 { width:50%; height:14px; }
+.skeleton.w-full { width:100%; height:48px; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.divider { border-top:1px solid var(--border); padding-top:8px; }
+.section-label { font-size:10px; color:var(--text4); margin-bottom:4px; margin-top:8px; text-align:center; letter-spacing:1px; text-transform:uppercase; font-weight:500; }
+
+.diff-item { background:var(--surface1); border:1px solid var(--border); border-radius:var(--radius); padding:12px; transition:opacity 150ms; }
+.ins-text { color:var(--accent); font-weight:500; }
+
+#ocr-drop-zone { border:2px dashed var(--border-visible); border-radius:var(--radius); padding:24px; text-align:center; cursor:pointer; transition:border-color 200ms; }
+.inline-flex { display:inline-flex; align-items:center; gap:4px; }
+.flex { display:flex; } .flex-col { flex-direction:column; } .flex-wrap { flex-wrap:wrap; }
+.gap-2 { gap:8px; } .gap-4 { gap:16px; } .gap-1\.5 { gap:6px; }
+.text-center { text-align:center; } .text-left { text-align:left; }
+.mb-1 { margin-bottom:4px; } .mb-2 { margin-bottom:8px; } .mb-3 { margin-bottom:12px; } .mb-4 { margin-bottom:16px; }
+.mt-1 { margin-top:4px; } .mt-2 { margin-top:8px; } .mt-3 { margin-top:12px; } .mt-8 { margin-top:32px; }
+.pt-2 { padding-top:8px; } .pt-3 { padding-top:12px; } .pt-4 { padding-top:16px; }
+.py-2 { padding-top:8px; padding-bottom:8px; } .py-6 { padding-top:24px; padding-bottom:24px; }
+.space-y-2 > * + * { margin-top:8px; } .space-y-3 > * + * { margin-top:12px; } .space-y-4 > * + * { margin-top:16px; }
+.w-full { width:100%; } .w-4 { width:16px; } .h-4 { height:16px; } .w-2 { width:8px; } .h-2 { height:8px; }
+.rounded-full { border-radius:var(--radius-pill); }
+.inline-block { display:inline-block; } .block { display:block; } .hidden { display:none; }
+.relative { position:relative; } .fixed { position:fixed; } .inset-0 { inset:0; } .z-50 { z-index:50; }
+.cursor-pointer { cursor:pointer; }
+details#browse-profile-wrap > summary::-webkit-details-marker { display: none; }
+.match-list-root .match-list-row { border-radius: var(--radius); border: 1px solid var(--border); padding: 10px 12px; background: #fff; transition: background 150ms; }
+.match-list-root .match-list-row:hover { background: var(--surface2); }
+.match-list-root .match-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; border: 1px solid var(--border); }
+textarea.resume-upload-textarea { min-height: 300px; line-height: 1.55; }
+.resume-dim-card { background: var(--surface1); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px; }
+.resume-dim-card h4 { font-size: 11px; font-weight: 500; color: var(--text4); margin-bottom: 6px; text-transform: none; letter-spacing: 0; }
+.suggest-role-line { font-size: 12px; color: var(--text2); padding: 6px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.suggest-role-line:last-child { border-bottom: none; }
+.suggest-role-line:hover { color: var(--accent); }
+
+.role-radar-card { padding: 12px; }
+.role-radar-card .radar-title-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.role-radar-card .radar-title { font-size: 13px; font-weight: 600; color: var(--text1); }
+.role-radar-card .radar-hint { font-size: 10px; color: var(--text4); }
+.role-radar-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.role-radar-chip { background: var(--accent-subtle); color: #2563EB; border: 1px solid transparent; border-radius: var(--radius-pill); padding: 6px 12px; font-size: 12px; line-height: 1.2; cursor: pointer; transition: border-color 150ms, background 150ms; font-family: inherit; }
+.role-radar-chip:hover { border-color: #2563EB; background: #DBEAFE; }
+.role-radar-chip:disabled { opacity: 0.5; cursor: not-allowed; border-color: transparent; background: var(--surface2); color: var(--text3); }
+.role-radar-actions { display: flex; gap: 8px; margin-top: 10px; }
+.role-radar-actions button { flex: 1; font-size: 11px; }
+.tag.tag-matched-role { background: var(--accent-subtle); color: #2563EB; font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: var(--radius-pill); }
+.match-row-reason { font-size: 11px; color: var(--text3); margin-top: 4px; line-height: 1.4; }
+.browse-result-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.browse-result-head .browse-result-text { flex: 1; min-width: 0; }
+.browse-result-head #overview-summary { font-size: 11px; color: var(--text3); line-height: 1.45; margin: 0; }
+.browse-result-head #overview-stats-inline { font-size: 11px; color: var(--text2); margin: 6px 0 0; }
+.browse-scope-toggle { display: flex; flex-shrink: 0; border: 1px solid var(--border-visible); border-radius: var(--radius); overflow: hidden; }
+.browse-scope-toggle .scope-btn { border: none; background: #fff; color: var(--text3); font-size: 11px; padding: 6px 10px; cursor: pointer; font-family: inherit; transition: background 150ms, color 150ms; }
+.browse-scope-toggle .scope-btn.scope-btn-on { background: var(--accent-subtle); color: #2563EB; font-weight: 500; }
+.match-role-group { border: 1px solid var(--border); border-radius: var(--radius); background: #fff; margin-bottom: 8px; }
+.match-role-group > summary { cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text2); padding: 8px 10px; list-style: none; }
+.match-role-group > summary::-webkit-details-marker { display: none; }
+.match-role-group-body { padding: 0 8px 8px; }
+details.browse-details > summary::-webkit-details-marker { display: none; }
+
+.role-radar-chip.role-radar-chip-copied { background: var(--accent); color: #fff; }
+
+/* JD 透视卡（决策优先布局） */
+.jdp-header { display: flex; align-items: flex-start; gap: 8px; }
+.jdp-match-card {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border-visible);
+  border-radius: var(--radius);
+}
+.jdp-score-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; color: var(--text2); }
+.jdp-score-num { font-size: 16px; font-weight: 700; color: var(--text1); letter-spacing: -0.02em; }
+.jdp-score-track { height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+.jdp-score-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 200ms ease-out; width: 0%; }
+.jdp-apply-row { margin-top: 10px; }
+.jdp-apply-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-pill); letter-spacing: 0.2px; }
+.jdp-apply-tag.tag-strong { background: var(--accent-subtle); color: #2563EB; }
+.jdp-apply-tag.tag-try { background: #FFFBEB; color: #B45309; }
+.jdp-apply-tag.tag-avoid { background: #FFF7ED; color: #C2410C; }
+.jdp-section { margin-top: 12px; }
+.jdp-section-title { font-size: 11px; font-weight: 600; margin: 0 0 6px 0; letter-spacing: 0.3px; color: var(--text1); }
+.jdp-h-trans { color: var(--text1); }
+.jdp-top3-list { list-style: none; padding: 0; margin: 0; }
+.jdp-top3-list li { margin-top: 8px; padding: 8px 10px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; line-height: 1.55; color: var(--text2); }
+.jdp-tier-pill { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: var(--radius-pill); margin-bottom: 6px; }
+.jdp-tier-must .jdp-tier-pill { background: #FFF7ED; color: #C2410C; }
+.jdp-tier-nice .jdp-tier-pill { background: #FFFBEB; color: #B45309; }
+.jdp-tier-highlight .jdp-tier-pill { background: var(--accent-subtle); color: #2563EB; }
+.jdp-next-line { font-size: 11px; color: var(--text3); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+.jdp-trans-block { margin-top: 8px; padding: 8px 10px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); font-size: 11px; }
+.jdp-trans-row { margin-top: 4px; color: var(--text3); line-height: 1.5; }
+.jdp-trans-row b { color: var(--text2); font-weight: 500; }
+.jdp-suggested { font-size: 12px; color: var(--text1); line-height: 1.55; margin-top: 6px; }
+.jdp-copy-btn { margin-top: 6px; font-size: 11px; padding: 4px 10px; }
+.jdp-interview-details { margin-top: 12px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0 10px 8px; background: var(--surface1); }
+.jdp-interview-details > summary { cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text2); padding: 10px 0; list-style: none; }
+.jdp-interview-details > summary::-webkit-details-marker { display: none; }
+.jdp-qa-block { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.jdp-qa-block:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+.jdp-qa-q { font-size: 12px; font-weight: 600; color: var(--text1); margin: 0 0 6px 0; line-height: 1.45; }
+.jdp-qa-a { font-size: 11px; color: var(--text2); line-height: 1.6; white-space: pre-wrap; margin: 0; }
+
+/* ============= Adapt / Redline track-changes ============= */
+.adapt-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.adapt-toolbar-right { display: flex; align-items: center; gap: 8px; }
+.adapt-pill { font-size: 10px; padding: 3px 8px; border-radius: var(--radius-pill); background: var(--accent-subtle); color: #2563EB; font-weight: 500; letter-spacing: 0.3px; }
+.adapt-hint { font-size: 11px; color: var(--text3); line-height: 1.5; margin: 0 0 10px 0; }
+.legend-del { color: #C2410C; text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.legend-ins { background: #DBEAFE; color: #1E40AF; border-radius: 3px; padding: 0 3px; }
+
+.redline-view { padding: 14px 16px; font-size: 13px; line-height: 1.75; color: var(--text1); white-space: pre-wrap; word-break: break-word; }
+.redline-view del.rl-del { color: #C2410C; text-decoration: line-through; text-decoration-thickness: 1.5px; margin-right: 1px; }
+.redline-view ins.rl-ins { background: #DBEAFE; color: #1E40AF; text-decoration: none; border-radius: 3px; padding: 0 3px; }
+.redline-view .rl-edit { display: inline; }
+.redline-view .rl-edit.is-accepted del.rl-del { display: none; }
+.redline-view .rl-edit.is-rejected ins.rl-ins { display: none; }
+.redline-view .rl-edit.is-rejected del.rl-del { color: var(--text1); text-decoration: none; }
+
+.redline-view .rl-actions { display: block; margin: 4px 0 10px 0; padding: 8px 10px; background: var(--surface2); border-left: 2px solid var(--accent); border-radius: 4px; font-size: 11px; line-height: 1.55; color: var(--text2); }
+.redline-view .rl-actions .rl-reason { display: block; margin-bottom: 6px; color: var(--text2); font-style: normal; }
+.redline-view .rl-actions .rl-reason::before { content: "↳ "; color: var(--text4); }
+.redline-view .rl-actions .rl-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.redline-view .rl-actions button { font-size: 11px; padding: 4px 10px; border-radius: var(--radius); cursor: pointer; font-family: inherit; border: 1px solid var(--border-visible); background: #fff; color: var(--text2); transition: all 120ms; }
+.redline-view .rl-actions button.rl-accept { border-color: var(--accent); color: var(--accent); }
+.redline-view .rl-actions button.rl-accept:hover { background: var(--accent); color: #fff; }
+.redline-view .rl-actions button.rl-reject:hover { background: var(--surface3); }
+.redline-view .rl-actions button.rl-custom { border-color: var(--accent); color: var(--accent); }
+.redline-view .rl-actions button.rl-custom:hover { background: var(--accent-subtle); }
+.redline-view .rl-actions button.rl-is-on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.redline-view .rl-actions .rl-state-label { color: var(--text4); font-size: 10px; }
+
+.redline-view .rl-custom-row { display: flex; gap: 6px; margin-top: 6px; }
+.redline-view .rl-custom-row textarea { flex: 1; min-height: 60px; font-family: inherit; font-size: 12px; padding: 6px 8px; border: 1px solid var(--accent); border-radius: var(--radius); background: #fff; color: var(--text1); resize: vertical; }
+.redline-view .rl-custom-row .rl-custom-btns { display: flex; flex-direction: column; gap: 4px; }
+.redline-view .rl-custom-row .rl-custom-btns button { font-size: 11px; padding: 4px 10px; }
+
+.adapt-floating-title { font-size: 12px; font-weight: 600; color: var(--text1); margin: 0 0 6px 0; }
+.adapt-floating-desc { font-size: 11px; color: var(--text3); line-height: 1.5; margin: 0 0 8px 0; }
+.adapt-floating-list { list-style: none; padding: 0; margin: 0; }
+.adapt-floating-list li { font-size: 12px; color: var(--text2); padding: 6px 0; border-top: 1px solid var(--border); line-height: 1.55; }
+.adapt-floating-list li:first-child { border-top: 0; }
+
+/* ============= Adapt PDF annotate mode ============= */
+.legend-strike { display: inline-block; min-width: 24px; height: 1px; border-bottom: 1.5px solid #C2410C; vertical-align: middle; margin: 0 2px; }
+.legend-bubble { display: inline-block; min-width: 14px; height: 14px; line-height: 14px; text-align: center; background: #3B82F6; color: #fff; border-radius: 50%; font-size: 10px; font-weight: 600; padding: 0 3px; vertical-align: middle; }
+
+.adapt-pdf-zoom-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.adapt-pdf-zoom-bar .adapt-pdf-zoom-pct { margin-left: auto; font-size: 11px; font-weight: 500; color: var(--text2); }
+.adapt-pdf-stage { padding: 12px; max-height: 520px; overflow: auto; background: var(--surface2); text-align: center; }
+.adapt-pdf-pages-root { display: inline-block; vertical-align: top; text-align: left; }
+.adapt-pdf-empty { padding: 32px 16px; text-align: center; }
+.adapt-pdf-empty p { font-size: 12px; color: var(--text3); margin: 4px 0; line-height: 1.6; }
+.adapt-pdf-page { position: relative; margin: 0 auto 14px; background: #fff; box-shadow: 0 0 0 1px var(--border-visible); }
+.adapt-pdf-page:last-child { margin-bottom: 0; }
+.adapt-pdf-page canvas { display: block; width: 100%; height: auto; }
+.adapt-pdf-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+.adapt-pdf-overlay .anno-rect { position: absolute; pointer-events: none; }
+.adapt-pdf-overlay .anno-strike { position: absolute; height: 1.5px; background: #C2410C; pointer-events: none; box-shadow: 0 0 0 0.5px rgba(194, 65, 12, 0.4); }
+.adapt-pdf-overlay .anno-strike.is-accepted { background: #2563EB; }
+.adapt-pdf-overlay .anno-strike.is-rejected { background: #A8A29E; }
+.adapt-pdf-overlay .anno-bubble { position: absolute; min-width: 18px; height: 18px; line-height: 18px; text-align: center; background: #3B82F6; color: #fff; border-radius: 50%; font-size: 11px; font-weight: 600; padding: 0 5px; cursor: pointer; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.45); pointer-events: auto; transform: translate(-50%, -50%); transition: transform 120ms; }
+.adapt-pdf-overlay .anno-bubble:hover { transform: translate(-50%, -50%) scale(1.15); }
+.adapt-pdf-overlay .anno-bubble.is-accepted { background: #22C55E; }
+.adapt-pdf-overlay .anno-bubble.is-rejected { background: #A8A29E; opacity: 0.6; }
+.adapt-pdf-overlay .anno-bubble.is-focus { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35), 0 2px 6px rgba(59, 130, 246, 0.5); }
+
+.adapt-suggest-head { display: flex; align-items: baseline; justify-content: space-between; margin: 6px 2px 8px; }
+.adapt-suggest-title { font-size: 13px; font-weight: 600; color: var(--text1); margin: 0; }
+.adapt-suggest-count { font-size: 11px; color: var(--text4); }
+.adapt-suggest-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.adapt-suggest-item { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; transition: border-color 150ms, box-shadow 150ms; }
+.adapt-suggest-item.is-focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-subtle); }
+.adapt-suggest-item.is-accepted { border-color: #22C55E; }
+.adapt-suggest-item.is-rejected { opacity: 0.55; }
+.adapt-suggest-head-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+.adapt-suggest-num { flex-shrink: 0; min-width: 18px; height: 18px; line-height: 18px; text-align: center; background: var(--accent); color: #fff; border-radius: 50%; font-size: 10px; font-weight: 600; padding: 0 5px; cursor: pointer; }
+.adapt-suggest-num.is-accepted { background: #22C55E; }
+.adapt-suggest-num.is-rejected { background: var(--text4); }
+.adapt-suggest-quote { font-size: 12px; color: var(--text2); line-height: 1.5; flex: 1; min-width: 0; word-break: break-word; }
+.adapt-suggest-quote .q-before { color: #C2410C; text-decoration: line-through; text-decoration-thickness: 1.5px; margin-right: 4px; }
+.adapt-suggest-quote .q-after { background: #DBEAFE; color: #1E40AF; border-radius: 3px; padding: 0 3px; }
+.adapt-suggest-reason { font-size: 11px; color: var(--text3); margin: 6px 0 8px 26px; line-height: 1.5; }
+.adapt-suggest-reason::before { content: "↳ "; color: var(--text4); }
+.adapt-suggest-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-left: 26px; }
+.adapt-suggest-btns button { font-size: 11px; padding: 4px 10px; border-radius: var(--radius); cursor: pointer; font-family: inherit; border: 1px solid var(--border-visible); background: #fff; color: var(--text2); transition: all 120ms; }
+.adapt-suggest-btns button.sg-locate { color: var(--accent); border-color: var(--accent); }
+.adapt-suggest-btns button.sg-locate:hover { background: var(--accent-subtle); }
+.adapt-suggest-btns button.sg-accept { color: #22C55E; border-color: #22C55E; }
+.adapt-suggest-btns button.sg-accept.is-on { background: #22C55E; color: #fff; }
+.adapt-suggest-btns button.sg-reject:hover { background: var(--surface3); }
+.adapt-suggest-btns button.sg-reject.is-on { background: var(--text4); color: #fff; border-color: var(--text4); }
+.adapt-suggest-btns button.sg-custom { color: var(--accent); border-color: var(--accent); }
+.adapt-suggest-btns button.sg-custom:hover { background: var(--accent-subtle); }
+.adapt-suggest-custom { margin: 8px 0 0 26px; }
+.adapt-suggest-custom textarea { width: 100%; min-height: 60px; font-family: inherit; font-size: 12px; padding: 6px 8px; border: 1px solid var(--accent); border-radius: var(--radius); background: #fff; color: var(--text1); resize: vertical; box-sizing: border-box; }
+.adapt-suggest-custom .cs-btns { display: flex; gap: 6px; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ====== onboarding ====== -->
+<div id="state-onboarding" style="display:block;">
+  <div class="text-center py-6" style="display:flex;flex-direction:column;gap:16px;align-items:center;padding-top:24px;padding-bottom:24px;">
+    <h1 style="font-size:18px;font-weight:600;">AI 求职工作流</h1>
+    <p style="color:var(--text2);font-size:13px;">在 Boss 直聘浏览职位时，AI 自动分析匹配度</p>
+    <div class="text-left w-full" style="max-width:280px;margin:0 auto;">
+      <p class="section-label" style="text-align:left;margin-top:0;">DeepSeek API Key</p>
+      <input type="password" id="deepseek-api-key-onboarding" placeholder="在 platform.deepseek.com 申请" autocomplete="off" spellcheck="false" />
+      <p style="font-size:10px;color:var(--text4);margin-top:6px;line-height:1.4;">可选填。优先级：此处填写的 Key &gt; 扩展内 <code style="font-size:10px;">secrets.js</code> &gt; 分发包内置 <code style="font-size:10px;">jobflow-default-api.js</code>（体验 Key）。仅保存在本机浏览器。</p>
+    </div>
+    <label class="inline-flex cursor-pointer" style="gap:8px;">
+      <input type="checkbox" id="agree-checkbox" class="w-4 h-4" />
+      <span style="font-size:11px;color:var(--text4);">同意将脱敏后的数据发送至云端进行 AI 分析</span>
+    </label>
+    <button id="btn-start" disabled class="btn-primary">开始使用</button>
+    <p style="font-size:10px;color:var(--text4);">数据本地脱敏后上传，不用于模型训练</p>
+  </div>
+</div>
+
+<!-- ====== resume_upload（简历 → 画像，后续匹配基础） ====== -->
+<div id="state-resume_upload" style="display:none;">
+  <div class="text-left space-y-3 mb-3">
+    <h2 style="font-size:16px;font-weight:600;">简历上传与 AI 分析</h2>
+    <p style="font-size:12px;color:var(--text2);line-height:1.5;">上传你的简历，AI 将分析你的优势方向与技能特长。分析结果将保存在本机，用于岗位匹配与语义筛选。</p>
+    <p style="font-size:10px;color:var(--text4);">隐私说明：请先自行脱敏手机号、邮箱等敏感信息后再粘贴；我们不会将简历用于模型训练。</p>
+  </div>
+  <textarea id="resume-paste-input" class="resume-upload-textarea" placeholder="在此粘贴你的简历全文，或点下方按钮上传 PDF / TXT…"></textarea>
+  <input type="file" id="resume-file-input" accept=".pdf,.txt,application/pdf,text/plain" class="hidden" />
+  <div class="flex gap-2 mt-2">
+    <button type="button" id="btn-resume-pick-file" class="btn-secondary" style="flex:1;font-size:12px;">上传 PDF / TXT 简历</button>
+    <button type="button" id="btn-resume-clear" class="btn-secondary" style="flex:1;font-size:12px;">清空文本</button>
+  </div>
+  <p id="resume-file-status" class="mt-2" style="display:none;font-size:11px;color:var(--text3);"></p>
+  <p style="font-size:10px;color:var(--text4);margin-top:6px;line-height:1.4;">若 PDF 无「可选中文字」（扫描件或文字已转曲），会先尝试本地 OCR；有文本层的 PDF 直接本地解析。文件不会上传，仅在你点击「开始分析」后把文本发给 AI。</p>
+  <p id="resume-analyze-error" class="mt-2" style="display:none;font-size:11px;color:#C2410C;"></p>
+  <button type="button" id="btn-analyze-resume" class="btn-primary mt-3">开始分析</button>
+  <div id="resume-profile-result" style="display:none;" class="mt-3 space-y-2">
+    <div class="card">
+      <p style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:8px;">AI 简历画像</p>
+      <div id="resume-profile-skills" class="resume-dim-card"><h4>核心技能</h4><div class="tags" id="resume-skills-tags"></div></div>
+      <div id="resume-profile-strengths" class="resume-dim-card"><h4>优势方向</h4><ul id="resume-strengths-list" style="font-size:12px;color:var(--text2);padding-left:16px;margin:0;"></ul></div>
+      <div id="resume-profile-highlights" class="resume-dim-card"><h4>经验亮点</h4><ul id="resume-highlights-list" style="font-size:12px;color:var(--text2);padding-left:16px;margin:0;"></ul></div>
+      <div id="resume-profile-gaps" class="resume-dim-card"><h4>待补充</h4><ul id="resume-gaps-list" style="font-size:12px;color:var(--text2);padding-left:16px;margin:0;"></ul></div>
+      <div id="resume-profile-roles" class="resume-dim-card"><h4>建议关注岗位</h4><div id="resume-suggested-roles"></div></div>
+    </div>
+    <button type="button" id="btn-confirm-resume" class="btn-primary">确认并开始求职</button>
+  </div>
+</div>
+
+<!-- ====== browsing ====== -->
+<div id="state-browsing" style="display:none;">
+
+  <div class="card mb-3 flex gap-2" style="padding:10px 12px;align-items:flex-start;flex-wrap:wrap;">
+    <details id="browse-profile-wrap" class="text-left" style="flex:1;min-width:0;">
+      <summary style="cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);list-style:none;">
+        <span id="browse-profile-summary-text">你的画像：尚未加载</span>
+      </summary>
+      <div id="browse-profile-detail" class="mt-2 pt-2" style="border-top:1px solid var(--border);font-size:11px;color:var(--text3);"></div>
+    </details>
+    <button type="button" id="btn-edit-resume-inline" class="btn-secondary" style="font-size:11px;padding:6px 10px;flex-shrink:0;">编辑简历</button>
+  </div>
+
+  <div id="role-radar-card" class="card role-radar-card mb-3" style="display:none;">
+    <div class="radar-title-row">
+      <span class="radar-title">AI 推荐求职方向</span>
+      <span class="radar-hint">点 chip 复制关键词，到 Boss 搜索框粘贴</span>
+    </div>
+    <div id="role-radar-chips" class="role-radar-chips"></div>
+    <p id="role-radar-copy-hint" style="display:none;font-size:11px;color:var(--accent);margin:8px 0 0 0;"></p>
+  </div>
+
+  <!-- ====== 当前岗位透视卡 ====== -->
+  <div id="jd-perspective-empty" class="card mb-3 text-center" style="padding:24px 16px;">
+    <p style="font-size:13px;color:var(--text2);margin:0 0 6px 0;font-weight:500;">在 Boss 列表点开任一岗位</p>
+    <p style="font-size:11px;color:var(--text3);line-height:1.6;margin:0;">自动对照你的简历画像：<strong style="color:var(--text1);">能不能投</strong>（匹配度 + 投递建议）→ <strong style="color:var(--accent);">今晚改什么</strong>（硬伤 / 翻译器）→ 底部可展开 <strong style="color:var(--text2);">面试弹药</strong>。</p>
+  </div>
+
+  <div id="jd-perspective-loading" class="card mb-3" style="display:none;padding:14px 16px;">
+    <p id="jd-perspective-loading-title" style="font-size:13px;color:var(--text1);margin:0 0 6px 0;font-weight:500;"></p>
+    <p style="font-size:11px;color:var(--text3);margin:0;">正在生成：先出匹配度与核心缺口；简历翻译与面试弹药随后补上…</p>
+    <div class="mt-2 space-y-2">
+      <div class="skeleton w-75"></div>
+      <div class="skeleton w-50"></div>
+      <div class="skeleton w-full"></div>
+    </div>
+  </div>
+
+  <div id="jd-perspective-card" class="card mb-3" style="display:none;padding:14px 16px;">
+    <div class="jdp-header">
+      <h3 id="jdp-title" style="font-size:14px;font-weight:600;color:var(--text1);margin:0;line-height:1.4;flex:1;min-width:0;"></h3>
+    </div>
+    <p id="jdp-meta" style="font-size:11px;color:var(--text3);margin:4px 0 0 0;"></p>
+
+    <div id="jdp-match-card" class="jdp-match-card">
+      <div class="jdp-score-head">
+        <span id="jdp-score-label" style="font-weight:500;">岗位匹配度</span>
+        <span id="jdp-score-num" class="jdp-score-num">—</span>
+      </div>
+      <div class="jdp-score-track" aria-hidden="true"><div id="jdp-score-fill" class="jdp-score-fill"></div></div>
+      <div class="jdp-apply-row">
+        <span id="jdp-apply-tag" class="jdp-apply-tag tag-try">可尝试投</span>
+      </div>
+    </div>
+
+    <p id="jdp-oneliner" style="font-size:12px;color:var(--text2);margin:10px 0 0 0;padding:8px 10px;background:var(--surface2);border-radius:var(--radius);line-height:1.55;border:1px solid var(--border);"></p>
+
+    <div id="jdp-top3-wrap" class="jdp-section">
+      <h4 class="jdp-section-title">核心缺口 · TOP 3</h4>
+      <ul id="jdp-top3" class="jdp-top3-list"></ul>
+    </div>
+
+    <div id="jdp-tail-pending" class="jdp-section" style="display:none;">
+      <p style="font-size:11px;color:var(--text3);margin:0 0 8px 0;line-height:1.5;">正在生成：简历经历翻译与面试弹药（可先根据上方匹配度与缺口做决策）</p>
+      <div class="skeleton w-full" style="height:10px;margin-bottom:6px;"></div>
+      <div class="skeleton w-75" style="height:10px;margin-bottom:6px;"></div>
+      <div class="skeleton w-50" style="height:10px;"></div>
+    </div>
+
+    <div id="jdp-translator-wrap" class="jdp-section">
+      <h4 class="jdp-section-title jdp-h-trans">简历经历翻译器</h4>
+      <div id="jdp-translator"></div>
+    </div>
+
+    <details id="jdp-interview-details" class="jdp-interview-details">
+      <summary>面试弹药库（针对本 JD · 点展开）</summary>
+      <div id="jdp-interview-body"></div>
+    </details>
+
+    <button type="button" id="btn-jdp-adapt" class="btn-primary" style="margin-top:14px;width:100%;">
+      AI 修订简历到此岗位
+    </button>
+  </div>
+
+  <div id="jd-perspective-error" class="card mb-3" style="display:none;padding:12px 16px;">
+    <p style="font-size:12px;color:var(--risk);margin:0;"></p>
+  </div>
+
+  <details id="browse-more-drawer" class="card browse-details mb-3 text-left" style="padding:10px 12px;">
+    <summary style="cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);list-style:none;">更多：API · 简历 · 截图识别</summary>
+    <div class="space-y-3 mt-2 pt-2" style="border-top:1px solid var(--border);">
+      <p id="quota-bar" style="display:none;"></p>
+      <div id="settings-api-inner" class="space-y-2 text-left">
+        <button type="button" id="btn-reupload-resume-settings" class="btn-secondary" style="font-size:12px;">重新上传 / 分析简历</button>
+        <p style="font-size:10px;color:var(--text4);">将回到简历步骤，可修改后重新生成画像。</p>
+        <input type="password" id="deepseek-api-key-browsing" placeholder="DeepSeek API Key（sk-…）" autocomplete="off" spellcheck="false" />
+        <p style="font-size:10px;color:var(--text4);line-height:1.4;margin:0;">未填时使用内置体验 Key（若有）或 <code style="font-size:10px;">secrets.js</code>。填写 <code style="font-size:10px;">sk-…</code> 可改为自有 Key；留空并保存可切回内置。</p>
+        <input type="text" id="deepseek-model-browsing" placeholder="留空则用 deepseek-v4-flash" autocomplete="off" spellcheck="false" />
+        <button type="button" id="btn-save-deepseek-api" class="btn-secondary" style="font-size:12px;">保存 API 配置</button>
+        <p id="deepseek-api-status" style="font-size:10px;color:var(--text4);"></p>
+      </div>
+      <div class="divider">
+        <button id="btn-toggle-fallback" class="btn-ghost">未能自动读取 JD？截图粘贴分析</button>
+        <div id="fallback-panel" style="display:none;" class="space-y-3 mt-3">
+          <input type="file" id="ocr-file-input" accept="image/*" class="hidden" />
+          <div id="ocr-drop-zone">
+            <p style="font-size:11px;color:var(--text4);margin-bottom:4px;">微信截图后按 Ctrl+V 粘贴</p>
+            <p style="font-size:10px;color:var(--text3);">或拖拽图片到此处 | 点击上传</p>
+          </div>
+          <img id="ocr-preview" src="" alt="" style="display:none;max-height:160px;" class="block" />
+          <div id="ocr-actions" style="display:none;" class="flex gap-2">
+            <button id="btn-reselect" class="btn-secondary" style="flex:1;font-size:11px;">× 重新选择</button>
+            <button id="btn-start-ocr" class="btn-primary" style="flex:1;font-size:11px;">开始识别</button>
+          </div>
+          <p id="ocr-loading" style="display:none;font-size:11px;color:var(--text4);" class="text-center">AI 识别中...</p>
+          <textarea id="ocr-result-textarea" rows="5" placeholder="识别结果将显示在这里..." style="display:none;"></textarea>
+          <button id="btn-manual-analyze" class="btn-secondary" style="display:none;">手动分析 JD</button>
+        </div>
+      </div>
+      <div class="divider">
+        <button id="btn-clear-data" class="btn-danger">清除缓存</button>
+      </div>
+    </div>
+  </details>
+</div>
+
+<!-- ====== perspective ====== -->
+<div id="state-perspective" style="display:none;">
+
+  <div id="skeleton-loading" style="display:none;" class="space-y-3 mb-4">
+    <div class="skeleton w-75"></div>
+    <div class="skeleton w-50"></div>
+    <div class="skeleton w-full"></div>
+    <div class="skeleton w-full"></div>
+  </div>
+
+  <div id="jd-header" class="mb-4">
+    <h2 id="jd-title" style="font-size:16px;font-weight:600;"></h2>
+    <p id="jd-meta" class="mt-1" style="font-size:11px;color:var(--text3);"></p>
+    <div id="jd-stars" class="mt-2"></div>
+  </div>
+
+  <div id="match-card" class="card mb-3">
+    <p id="match-reason" class="mb-2" style="font-size:13px;color:var(--text2);"></p>
+    <div id="match-tags" class="tags"></div>
+  </div>
+
+  <div id="gap-card" class="card mb-3">
+    <h3 class="mb-2" style="font-size:13px;font-weight:500;color:var(--text2);">关键能力词</h3>
+    <div class="flex flex-wrap gap-1\.5 mb-1\.5" style="align-items:center;">
+      <span style="font-size:11px;color:var(--text4);">已有：</span>
+      <span id="have-skills" class="tags"></span>
+    </div>
+    <div class="flex flex-wrap gap-1\.5 mb-2" style="align-items:center;">
+      <span style="font-size:11px;color:var(--text4);">缺失：</span>
+      <span id="miss-skills" class="tags"></span>
+    </div>
+    <p id="gap-advice" style="font-size:11px;color:var(--text3);"></p>
+  </div>
+
+  <div class="space-y-2">
+    <button id="btn-adapt" class="btn-primary">AI 适配简历</button>
+    <button id="btn-view-jd" class="btn-secondary">查看原始 JD</button>
+    <button id="btn-back-browsing" class="btn-ghost w-full text-center">← 返回浏览</button>
+  </div>
+</div>
+
+<!-- ====== adapt ====== -->
+<div id="state-adapt" style="display:none;">
+
+  <div class="adapt-toolbar mb-3">
+    <button id="btn-back-perspective" class="btn-ghost" style="font-size:12px;">← 返回</button>
+    <div class="adapt-toolbar-right">
+      <button id="btn-adapt-regenerate" class="btn-ghost" style="font-size:11px;display:none;">重新生成</button>
+      <span id="adapt-status-pill" class="adapt-pill" style="display:none;"></span>
+    </div>
+  </div>
+
+  <div id="adapt-job-meta" class="card mb-3" style="padding:10px 12px;">
+    <p id="adapt-job-title" style="font-size:13px;font-weight:600;color:var(--text1);margin:0;line-height:1.4;"></p>
+    <p id="adapt-job-sub" style="font-size:11px;color:var(--text3);margin:4px 0 0 0;"></p>
+  </div>
+
+  <div id="adapt-loading" class="card mb-3" style="display:none;padding:14px 16px;">
+    <p style="font-size:13px;color:var(--text1);margin:0 0 6px 0;font-weight:500;">AI 正在精准定位修改点…</p>
+    <p style="font-size:11px;color:var(--text3);margin:0;">将对照 JD 关键词，在简历原文里逐句标注。</p>
+    <div class="mt-2 space-y-2">
+      <div class="skeleton w-75"></div>
+      <div class="skeleton w-full"></div>
+      <div class="skeleton w-50"></div>
+    </div>
+  </div>
+
+  <div id="adapt-error" class="card mb-3" style="display:none;padding:12px 16px;">
+    <p style="font-size:12px;color:var(--risk);margin:0 0 8px 0;"></p>
+    <button id="btn-adapt-retry" class="btn-secondary" style="font-size:11px;">重试</button>
+  </div>
+
+  <!-- 模式 A：批注模式（用户上传了原 PDF） -->
+  <div id="adapt-mode-pdf" style="display:none;">
+    <p class="adapt-hint">在你的原 PDF 上标出 AI 建议改的位置（<span class="legend-strike">红色划线</span>）与编号（<span class="legend-bubble">①</span>）。点下方清单或 PDF 上的气泡可联动跳转。可用缩小/放大快速扫全稿找批注。</p>
+
+    <div id="adapt-pdf-zoom-bar" class="adapt-pdf-zoom-bar">
+      <span style="font-size:11px;color:var(--text3);">PDF 预览</span>
+      <button type="button" id="btn-adapt-pdf-zoom-out" class="btn-secondary" style="font-size:11px;padding:4px 10px;">缩小</button>
+      <button type="button" id="btn-adapt-pdf-zoom-fit" class="btn-secondary" style="font-size:11px;padding:4px 10px;">适应宽度</button>
+      <button type="button" id="btn-adapt-pdf-zoom-in" class="btn-secondary" style="font-size:11px;padding:4px 10px;">放大</button>
+      <span id="adapt-pdf-zoom-pct" class="adapt-pdf-zoom-pct">100%</span>
+    </div>
+    <div id="adapt-pdf-stage" class="adapt-pdf-stage card mb-3">
+      <div id="adapt-pdf-pages-root" class="adapt-pdf-pages-root"></div>
+    </div>
+
+    <div class="adapt-suggest-head">
+      <h4 class="adapt-suggest-title">AI 建议清单</h4>
+      <span id="adapt-suggest-count" class="adapt-suggest-count"></span>
+    </div>
+    <div id="adapt-suggest-list" class="adapt-suggest-list"></div>
+
+    <div id="adapt-floating-tips-pdf" class="card mb-3" style="display:none;padding:12px 14px;">
+      <p class="adapt-floating-title">💡 无法精准定位的补充建议</p>
+      <p class="adapt-floating-desc">AI 觉得这些建议对你有用，但在 PDF 原文里找不到合适锚点。</p>
+      <ul id="adapt-floating-list-pdf" class="adapt-floating-list"></ul>
+    </div>
+
+    <div class="divider space-y-2">
+      <button type="button" id="btn-export-annotated-pdf" class="btn-primary">导出批注版 PDF</button>
+      <p style="font-size:10px;color:var(--text4);margin:0;line-height:1.55;text-align:center;">
+        在原 PDF 上叠加红色划线与编号；正文仍为矢量可选中。中文说明页为图片页（便于阅读）。
+      </p>
+    </div>
+  </div>
+
+  <!-- 模式 B：纯文本兜底（用户没上传过 PDF / 只粘了文本 / PDF 超 4MB 未保留） -->
+  <div id="adapt-mode-text" style="display:none;">
+    <p id="adapt-mode-text-hint" class="adapt-hint">未检测到已保存的原 PDF，临时使用纯文本批注。删除内容 <del class="legend-del">划线</del>，新增内容 <ins class="legend-ins">高亮</ins>。</p>
+
+    <div id="adapt-redline" class="redline-view card mb-3"></div>
+
+    <div id="adapt-floating-tips" class="card mb-3" style="display:none;padding:12px 14px;">
+      <p class="adapt-floating-title">💡 无法精准定位的补充建议</p>
+      <ul id="adapt-floating-list" class="adapt-floating-list"></ul>
+    </div>
+  </div>
+</div>
+
+<script src="lib/pdf.min.js"></script>
+<script src="lib/pdf-lib.min.js"></script>
+<script src="lib/tesseract/tesseract.min.js"></script>
+<script src="sidepanel.js"></script>
+</body>
+</html>
