@@ -1,78 +1,91 @@
 # JobLens（Chrome 扩展）
 
-在 Boss 直聘等网页侧栏提供 AI 协同的求职决策辅助（Manifest V3）。本仓库为**源码**，需自行在 Chrome 中「加载已解压的扩展」使用。
+在 Boss 直聘等网页侧栏提供 AI 协同的求职决策辅助（Manifest V3）。本仓库为**源码**，需自行在 Chrome 中「加载已解压的扩展」使用；若使用维护者提供的 **Release 安装包（zip）**，步骤相同，也是「加载已解压」。
+
+**最终用户**请阅读下文 **[用户使用指南](#用户使用指南读这一段就够)**。若你是**仓库维护者**需要把本地代码推到 GitHub，见 [`docs/维护者-推送到-GitHub.md`](docs/维护者-推送到-GitHub.md)（与安装无关）。
 
 本地项目文件夹建议命名为 **`joblens`**（与 npm 包名一致）。若你改过文件夹路径，请到 `chrome://extensions/` 重新「加载已解压的扩展程序」并指向新目录。
 
-## 使用前准备
+---
 
-1. **Chrome 浏览器**（或 Edge 等 Chromium 内核浏览器）。
-2. **DeepSeek API Key**（或其他在 `background.js` 中配置的兼容接口；以你实际代码为准）。也可在侧栏填写 Key，见下文配置。
+## 用户使用指南（读这一段就够）
+
+### JobLens 是什么
+
+JobLens 是一款面向 **Boss 直聘 Web 端** 的 Chrome 扩展（Manifest V3）。你在 Boss 上浏览职位时，扩展通过浏览器 **侧栏（Side Panel）** 提供 **JD 透视**（读岗位要求、归纳要点、对照你的简历画像）、**简历画像**（基于你上传或粘贴的简历）以及 **简历适配 Adapt**（按 JD 缺口给出修改思路或 Diff 式建议）等能力，把「看 JD → 想自己合不合适 → 要不要改简历再投」串成一条连贯工作流。
+
+> **重要说明**：本工具为 **第三方求职辅助**，与 Boss 直聘 **无官方关联**；AI 输出仅供辅助阅读与思考，**是否投递、如何填写简历与沟通内容仍由你本人负责**。
+
+### 为什么用 JobLens（能带来的好处）
+
+- **少打断**：主要信息在侧栏完成，不替代 Boss 原站操作，照常刷列表、点进详情即可。  
+- **上下文对齐**：尽量基于 **你当前点中的那条职位** 拉取 JD，再和你的简历画像对照，减少来回切换窗口、复制粘贴的心智负担。  
+- **密钥不握在网页里**：大模型请求由扩展 **后台（Service Worker）** 发出，侧栏不直接 `fetch` 模型接口；你可选择在侧栏或分发包约定的方式里配置 Key（细节见下文 **「API」** 一节）。  
+- **敏感信息有意识处理**：正文链路会对手机号、邮箱、身份证号等做 **正则脱敏** 后再参与展示或传输（仍请勿在侧栏粘贴银行卡密码、真实密钥等）。  
+- **跟 Chrome 方向一致**：采用 Manifest V3，便于后续安全与性能维护。
+
+### 适合谁
+
+主要面向 **校招生、转行与初级岗位** 求职者：经常用电脑在 Boss 上 **批量看 JD**、需要快速理解「这条适不适合我」、并偶尔要 **针对性改一段简历** 的人。
+
+### 安装前你要有什么
+
+1. **Chrome**（推荐最新稳定版）或 **Edge** 等 Chromium 内核浏览器。  
+2. **扩展文件**：  
+   - **维护者提供的 zip（如 Release 里的「零配置包」）**：解压到任意英文/中文路径均可，只要解压后 **这一层文件夹里直接能看到 `manifest.json`**。  
+   - **自己从 GitHub 下的源码包**：**Code → Download ZIP** 解压，或 `git clone`；同样选 **含 `manifest.json` 的根文件夹** 去加载。  
+3. **API**：若包内已带 **内置体验 Key**（由分发方写在 `jobflow-default-api.js` 等位置），可先 **开箱即用**；若希望用自己的额度或更快响应，需自备 **DeepSeek（或兼容接口）** 的 API Key，在侧栏 **更多 → API** 保存后即可优先使用你的 Key（与下文 **「API」** 一节一致）。
+
+### 操作步骤一：载入扩展
+
+1. 地址栏打开 **`chrome://extensions/`**（Edge 为 **`edge://extensions/`**）。  
+2. 打开右上角 **开发者模式** / **开发人员模式**。  
+3. 点 **加载已解压的扩展程序** / **加载解压缩的扩展**。  
+4. 在文件选择框里选中 **扩展根目录**（该目录下应直接包含 `manifest.json`、`background.js`、`sidepanel.html` 等）。  
+5. 若你之后 **移动、重命名** 了该文件夹，需在本页 **移除** 该扩展后，再重新执行「加载已解压」指向新位置。
+
+### 操作步骤二：打开侧栏并开始向导
+
+1. 点击浏览器工具栏 **扩展（拼图）图标**，找到本扩展（清单内名称为 **「AI 求职工作流」**，仓库对外可称 JobLens），建议 **固定** 到工具栏。  
+2. 点击扩展图标打开 **侧栏**（Side Panel；若你的 Chrome 版本在菜单里提供「打开侧栏」类入口，也可从那里进入）。  
+3. 在侧栏内按顺序完成 **首次向导**（若界面迭代，以侧栏实际文案为准）：  
+   - 需要时填写 **DeepSeek API Key**（无内置 Key 的源码安装必填之一）；  
+   - **上传或粘贴简历**，完成 **AI 分析与简历画像**；  
+   - 点击 **确认并开始求职**（或同等含义按钮），进入「在 Boss 上刷岗」的主状态。
+
+### 操作步骤三：在 Boss 直聘上使用
+
+1. 用 **同一浏览器** 打开 [Boss 直聘](https://www.zhipin.com/) 并登录，进入 **职位列表 / 搜索结果** 等可以 **逐条点击职位卡片** 的页面。  
+2. **侧栏保持打开**，与 Boss 页并排使用。  
+3. **用鼠标单击** 列表中的 **某一条职位卡片**（尽量点卡片主体，而不是只悬停）；扩展会尝试抓取该岗位 JD。  
+4. 侧栏进入 **JD 透视**：一般会展示匹配度、是否建议投递、要点摘要等（具体模块以当前版本为准）。  
+5. 需要改简历时，使用侧栏提供的 **Adapt / 简历适配** 相关入口：根据 JD 缺口查看 **修改建议或 Diff**，你再自行决定是否采纳、如何改自己的简历文件或 Boss 在线简历。
+
+**使用习惯建议**
+
+- **刚装完或刚更新扩展**：在 Boss 标签页按 **F5 刷新**，避免内容脚本未注入。  
+- **列表筛选、排序或站内跳转后** 若发现 JD 与当前卡片不一致：**重新单击** 该职位卡片，触发重新对齐。  
+- 侧栏若提供「复制关键词」等能力，可按提示到 Boss 搜索框 **Ctrl+V** 使用。
+
+### 常见问题
+
+| 现象 | 建议处理 |
+|------|----------|
+| 提示先完成简历画像 | 回到侧栏向导，上传/粘贴简历并完成分析，再点「确认并开始求职」。 |
+| 透视失败、无 JD 正文 | 刷新 Boss 页；确认已单击列表卡片；稍后再试；检查网络与 API 是否正常。 |
+| 想用自己的 API | 侧栏 **更多 → API** 填写并保存（见下文 **「API」** 一节）。 |
+| 改动了 `manifest.json` / `background.js` 后行为异常 | 在扩展管理页 **移除扩展**，再重新 **加载已解压**。 |
+
+### 隐私与安全（再强调）
+
+- **不要把带真实 Key 的文件** 推到 **公开** GitHub（例如填好密钥的 `secrets.js`、`jobflow-default-api.js`）。  
+- 「免配置」安装包请通过 **Release 附件、私信或私有渠道** 分发，与「源码仓库不带密钥」可以同时成立。
 
 ---
 
-## 一、把项目放到 GitHub（小白可按顺序做）
+## 从本仓库获取源码并安装（速查）
 
-### 第 0 步：注册 GitHub
-
-1. 打开 [https://github.com](https://github.com) 注册账号并登录。
-
-### 第 1 步：安装 Git（二选一）
-
-**方式 A（推荐新手）：安装 [GitHub Desktop](https://desktop.github.com/)**
-
-- 安装后登录 GitHub 账号，图形界面即可完成「提交、推送」，不必记命令。
-
-**方式 B：安装 [Git for Windows](https://git-scm.com/download/win)**
-
-- 安装时一路 Next 即可；装好后**重新打开**终端或 Cursor，再试输入 `git --version`，能显示版本号即成功。
-
-> 若命令行提示找不到 `git`，说明未安装或未加入 PATH，请用方式 A，或重装 Git 并重启电脑。
-
-### 第 2 步：在 GitHub 上新建空仓库
-
-1. 登录 GitHub → 右上角 **+** → **New repository**。
-2. **Repository name** 填例如：`joblens`（可自定）。
-3. 选 **Public**（公开，别人才能直接看到和使用）。
-4. **不要**勾选 “Add a README”（先保持空仓库，避免和本地第一次推送冲突）。
-5. 点 **Create repository**。页面会显示后续命令，可先不管，继续下面「本地」操作。
-
-### 第 3 步：用 GitHub Desktop 推送（适合小白）
-
-1. 打开 **GitHub Desktop** → **File** → **Add Local Repository**。
-2. 点 **Choose…**，选中你电脑上的文件夹：`joblens`（即包含 `manifest.json` 的那一层）。
-3. 若提示「不是 Git 仓库」，点 **create a repository**，**Name** 与 GitHub 上仓库名一致，**Local Path** 选到上一级目录，保证子文件夹名正确，再创建。
-4. 左下角 **Summary** 写一句说明，例如：`Initial commit` → 点 **Commit to main**。
-5. 菜单 **Repository** → **Repository settings…** → **Remote** → **Primary remote repository** 填你的仓库地址（在 GitHub 仓库页点绿色 **Code** 复制 HTTPS，形如 `https://github.com/你的用户名/joblens.git`）。
-6. 点 **Publish repository**（或 **Push origin**），等待上传完成。
-
-完成后，在浏览器打开你的 GitHub 仓库页，应能看到所有文件（**不应**看到 `secrets.js`，见下文安全说明）。
-
-### 第 4 步：若你更想用命令行（已安装 Git 时）
-
-在 **Cursor 终端**或 **PowerShell** 中执行（把地址改成你自己的仓库）：
-
-```powershell
-cd "d:\Users\86133\Desktop\joblens"
-git init
-git branch -M main
-git add .
-git status
-```
-
-确认 **`secrets.js` 不会出现在待提交列表里**（本仓库已在 `.gitignore` 中忽略它）。若你曾把密钥写进别的文件名，不要 `git add` 那些文件。
-
-```powershell
-git commit -m "Initial commit"
-git remote add origin https://github.com/你的用户名/你的仓库名.git
-git push -u origin main
-```
-
-第一次 `git push` 时 GitHub 会要求登录（浏览器或 Token），按提示操作即可。
-
----
-
-## 二、别人（或你自己另一台电脑）怎么安装扩展
+（与 **用户使用指南** 中「载入扩展」一致；适合已会下载仓库的人。）
 
 1. 从 GitHub **Code → Download ZIP** 解压，或 `git clone` 本仓库。
 2. Chrome 打开 `chrome://extensions/`。
@@ -82,21 +95,28 @@ git push -u origin main
 
 ---
 
-## 三、配置 API Key（不要泄露到 GitHub）
+## API：默认内置 vs 自有 Key（不要泄露到 GitHub）
 
-1. 复制 `secrets.example.js` 为同目录下的 **`secrets.js`**。
-2. 在 `secrets.js` 中填入 `LOCAL_DEEPSEEK_API_KEY`（及需要的模型名，见文件内注释）。
-3. **`secrets.js` 已被 `.gitignore` 忽略，不要删除 `.gitignore`，也不要把真实 Key 贴进 Issue/讨论区。**
+（侧栏 **更多 → API** 与上文「用户使用指南 → 安装前你要有什么」一致；以下为补充细节与维护者说明。）
 
-可选：若你为「体验用户」提供内置 Key，可参考 `jobflow-default-api.example.js` 复制为 `jobflow-default-api.js` 并阅读其中安全提示。**含真实 Key 的 `jobflow-default-api.js` 不要提交到公开仓库。**
+**给最终用户**
+
+- 有**内置体验 Key**的安装包：开箱即用；觉得慢、限额不够或想用自己的账号时，在侧栏 **更多 → API** 填写自有 Key 并保存即可覆盖。
+- 无内置 Key 的源码版：需按下面「开发者」方式之一配置 Key。
+
+**给维护者 / 分发方（实现「免配置」）**
+
+1. 在扩展根目录维护 **`jobflow-default-api.js`**，将 `JOBFLOW_DEFAULT_SHARED_DEEPSEEK_API_KEY` 填为你要提供的体验 Key（见文件内注释与成本、安全说明）。
+2. **公开 GitHub 仓库不要提交含真实 Key 的 `jobflow-default-api.js`**（易被爬取滥用）。免配置安装包建议通过**私信渠道、Release 附件、私有构建**等方式分发；源码仓库可继续保留空字符串版本。
+3. 开发者本机调试也可复制 `secrets.example.js` 为 **`secrets.js`** 并填写 Key；**`secrets.js` 已在 `.gitignore` 中**，勿把真实 Key 贴进 Issue。
+
+**常见疑问：能不能插件里默认带好 Key，用户打开就能用，又不传到 GitHub？**
+
+- **能，而且和现在这套设计一致。** 用户装的是「扩展这一整个文件夹（或商店里的包）」，不是「GitHub 网页」。你在**自己电脑上**把 `jobflow-default-api.js` 填好 Key，再把这个文件夹打成 ZIP 发给别人、或只把 ZIP 挂到 Release，**Git 仓库里仍然只提交空 Key 版本**即可：仓库里没有 Key，用户手里的安装包里有 Key。
+- **逻辑上**：不填侧栏 → 用 `jobflow-default-api.js` 里的默认；填了侧栏 → 用自己的。和「API 不进仓库」不矛盾，矛盾的是「又想公开源码里带 Key」——那样谁都能抄走滥用。
+- **若坚持「安装包里也绝对不能出现 Key」**：只能改成请求**你自己的服务器**，由服务器代调 DeepSeek（Key 只放在服务器上），扩展里只放你的接口域名；这要单独做后端，不是改一行配置能解决的。
 
 修改 `background.js` 或 `manifest.json` 后，建议在 `chrome://extensions/` 里移除扩展再重新「加载已解压」，以免旧 Service Worker 缓存。
-
----
-
-## 四、要不要单独做「产品官网」？
-
-**不必须。** 有本 README + 几张截图，就足够让别人从 GitHub 安装使用。若以后想做宣传页，可使用 GitHub Pages 或任意静态托管，链回本仓库即可。
 
 ---
 
