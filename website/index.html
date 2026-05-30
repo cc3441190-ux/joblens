@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>joblens — Boss 直聘上的 AI 求职侧栏助手</title>
+  <meta name="description" content="joblens 是面向 Boss 直聘网页端的 Chrome 扩展，在浏览器侧栏提供 JD 透视、简历画像与简历适配建议，助你连续完成求职决策。" />
+  <!-- 若非此仓库地址，请全局替换 BASE_REPO -->
+  <!-- BASE_REPO=https://github.com/CC3441190-ux/joblens -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="hero-blob hero-blob--1" aria-hidden="true"></div>
+  <div class="hero-blob hero-blob--2" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="#top">joblens</a>
+      <nav class="nav" aria-label="主导航">
+        <a href="#how">怎么用</a>
+        <a href="#features">能力</a>
+        <a href="#scenes">场景</a>
+        <a href="#faq">常见问题</a>
+      </nav>
+      <div class="header-cta">
+        <!-- 直连附件：…/releases/latest/download/<文件名>；Gitee 同理 …/releases/download/<tag>/<文件名> -->
+        <a class="btn btn-ghost btn-sm" href="https://github.com/CC3441190-ux/joblens/releases/latest/download/JobLens-zero-config.zip" rel="noopener noreferrer">下载安装包</a>
+        <a class="btn btn-primary btn-sm" href="https://github.com/CC3441190-ux/joblens" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="section hero">
+      <div class="container hero-inner">
+        <div class="hero-badge">Chrome · Manifest V3 · Boss 直聘 Web</div>
+        <h1 class="hero-title">让 AI 守在侧栏，<br />你专心刷 Boss 的岗位</h1>
+        <p class="hero-lead">
+          joblens 在<strong>不打断 Boss 原生页面</strong>的前提下，把「读 JD → 对照简历画像 → 按需改简历」收进<strong>浏览器侧栏</strong>，
+          AI 只做协同与建议，<strong>投不投仍由你决定</strong>。
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="https://github.com/CC3441190-ux/joblens" target="_blank" rel="noopener noreferrer">在 GitHub 获取扩展</a>
+          <a class="btn btn-secondary btn-lg" href="https://github.com/CC3441190-ux/joblens/releases/latest" target="_blank" rel="noopener noreferrer">查看最新 Release</a>
+        </div>
+        <p class="hero-note">
+          <span class="hero-note-strong">免责声明：</span>本工具为<strong>第三方辅助</strong>，与 Boss 直聘<strong>无官方关联</strong>；AI 输出仅供参考，请以平台规则与个人判断为准。
+        </p>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="mock-browser">
+            <div class="mock-browser-bar"><span></span><span></span><span></span></div>
+            <div class="mock-browser-body">
+              <div class="mock-joblist">
+                <div class="mock-jobcard is-active"><span class="mj-title">前端工程师</span><span class="mj-meta">13-20K · 上海</span></div>
+                <div class="mock-jobcard"><span class="mj-title">全栈工程师</span><span class="mj-meta">面议 · 北京</span></div>
+                <div class="mock-jobcard"><span class="mj-title">实习 · 产品</span><span class="mj-meta">日薪 · 远程</span></div>
+              </div>
+              <div class="mock-sidepanel">
+                <div class="mock-sp-head">JD 透视</div>
+                <div class="mock-sp-stat mock-sp-high">匹配度 · 中高</div>
+                <div class="mock-sp-line mock-skel"></div>
+                <div class="mock-sp-line mock-skel mock-skel-short"></div>
+                <div class="mock-sp-pill">建议：可投，补足项目描述中的指标</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="how">
+      <div class="container">
+        <h2 class="section-title">三步上手 joblens</h2>
+        <p class="section-sub">从加载扩展到在 Boss 上点选岗位，整条路径尽量短。</p>
+        <div class="grid-3 cards-how">
+          <article class="card card-lift card-how">
+            <div class="step-label">步骤 01</div>
+            <div class="card-how-icon card-how-icon--install" aria-hidden="true"></div>
+            <h3>加载扩展</h3>
+            <p>在 Chrome 打开扩展管理页，开启开发者模式后「加载已解压」，选中包含 manifest.json 的文件夹。</p>
+          </article>
+          <article class="card card-lift card-how">
+            <div class="step-label">步骤 02</div>
+            <div class="card-how-icon card-how-icon--wizard" aria-hidden="true"></div>
+            <h3>侧栏完成向导</h3>
+            <p>按需配置 API Key、上传或粘贴简历，完成简历画像与分析，确认进入求职模式。</p>
+          </article>
+          <article class="card card-lift card-how">
+            <div class="step-label">步骤 03</div>
+            <div class="card-how-icon card-how-icon--boss" aria-hidden="true"></div>
+            <h3>在 Boss 点选岗位</h3>
+            <p>列表中单击职位卡片，侧栏自动对齐当前 JD，查看透视要点与适配建议。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="container">
+        <h2 class="section-title">为什么侧栏更合适</h2>
+        <p class="section-sub">信息密度收在助手面板里，Boss 列表仍是你的主工作台。</p>
+
+        <div class="feature-row">
+          <div class="feature-copy">
+            <span class="tag-pill">JD 透视</span>
+            <h3 class="feature-h">把岗位要求读薄，对上你的简历画像</h3>
+            <p class="feature-p">Boss 单击卡片后抓取岗位描述，归纳匹配要点与注意事项，尽量避免「看个 JD 关掉五个标签页」的节奏断裂。</p>
+            <ul class="feature-ul">
+              <li>对齐当前选中卡片，减少 JD 错位困扰</li>
+              <li>匹配度与投递建议在侧栏一次看清</li>
+            </ul>
+          </div>
+          <div class="feature-visual">
+            <div class="mini-panel mini-panel--blue">
+              <div class="mini-row"><strong>任职要求</strong><span class="mini-tag">已提炼</span></div>
+              <div class="mini-bar"></div>
+              <div class="mini-row small">Vue3 · TS · 性能优化 · …</div>
+              <div class="mini-row small muted">与简历重合：脚手架 / 大屏项目</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-row feature-row--reverse">
+          <div class="feature-copy">
+            <span class="tag-pill">简历画像</span>
+            <h3 class="feature-h">先有「你是什么样的人选」，透视才有意义</h3>
+            <p class="feature-p">基于你提供的简历正文或文件形成结构化画像，后续每条 JD 都站在同一张「底图」上做对照。</p>
+            <ul class="feature-ul">
+              <li>一次录入，在多岗位间复用</li>
+              <li>敏感字段在链路中做正则脱敏处理</li>
+            </ul>
+          </div>
+          <div class="feature-visual">
+            <div class="mini-panel">
+              <div class="mini-avatar-row">
+                <div class="mini-avatar"></div>
+                <div>
+                  <div class="mini-row"><strong>简历画像</strong></div>
+                  <div class="mini-row small muted">校招生 · 前端 · 2 段实习</div>
+                </div>
+              </div>
+              <div class="mini-chip-row">
+                <span class="mini-chip">工程化</span>
+                <span class="mini-chip">可视化</span>
+                <span class="mini-chip">协作沟通</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-row">
+          <div class="feature-copy">
+            <span class="tag-pill">Adapt · 适配</span>
+            <h3 class="feature-h">按需改简历，而不是替你做决定</h3>
+            <p class="feature-p">对照 JD 缺口给出修改思路或可读的 Diff 式建议；是否采纳、如何落到 Word / PDF / 在线简历仍由你完成。</p>
+            <ul class="feature-ul">
+              <li>AI 只做协同（建议与差异对照）</li>
+              <li>大模型请求在扩展后台发出，密钥不暴露在网页控制台</li>
+            </ul>
+          </div>
+          <div class="feature-visual">
+            <div class="mini-diff">
+              <div class="diff-line diff-del">熟悉前端工程化<strong>相关工作</strong></div>
+              <div class="diff-line diff-add">熟悉前端工程化，<strong>独立搭建 Cli 脚手架并落地 XX 团队</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="scenes">
+      <div class="container">
+        <h2 class="section-title">特别适合这些同学</h2>
+        <p class="section-sub">用场景说话，不使用虚构用户评价。</p>
+        <div class="grid-3">
+          <article class="card card-lift scene-card">
+            <div class="scene-avatar" aria-hidden="true">①</div>
+            <h3>校招生 · 高密度海投</h3>
+            <p class="scene-quote">「几十条 JD 长得像又不一样——需要快速判断是否值得细看 JD 正文。」</p>
+          </article>
+          <article class="card card-lift scene-card">
+            <div class="scene-avatar" aria-hidden="true">②</div>
+            <h3>转行 / 过渡期</h3>
+            <p class="scene-quote">「每一段经历都要重写一遍故事线——希望按岗位要求对齐表述，又不想从零瞎编。」</p>
+          </article>
+          <article class="card card-lift scene-card">
+            <div class="scene-avatar" aria-hidden="true">③</div>
+            <h3>初级岗 · 精投</h3>
+            <p class="scene-quote">「更看重匹配解释与风险提示，而不是泛泛的鼓励和套话。」</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section faq-section" id="faq">
+      <div class="container faq-layout">
+        <div class="faq-intro">
+          <h2 class="section-title section-title-left">常见问题</h2>
+          <p class="faq-intro-p">使用前请阅读 README 中的用户指南与安全说明。</p>
+          <a class="link-more" href="https://github.com/CC3441190-ux/joblens/blob/main/README.md" target="_blank" rel="noopener noreferrer">打开完整使用文档 →</a>
+        </div>
+        <div class="faq-list">
+          <div class="faq-item">
+            <button type="button" class="faq-q">支持哪些浏览器与网站？</button>
+            <div class="faq-a">
+              <p>推荐使用最新稳定版 Chrome。当前产品聚焦 <strong>Boss 直聘 Web 端</strong>（岗位列表单击卡片）；其他站点未做适配承诺。</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button type="button" class="faq-q">一定要自己准备 API Key 吗？</button>
+            <div class="faq-a">
+              <p>若你拿到的分发包内含维护方配置的<strong>内置体验 Key</strong>，可开箱即用；需要更高配额或自用账号时，可在侧栏<strong>更多 → API</strong>填入自有 DeepSeek Key 并保存。</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button type="button" class="faq-q">joblens 会和 Boss「抢操作」吗？</button>
+            <div class="faq-a">
+              <p>不会。我们以<strong>浏览器侧栏</strong>承载扩展信息，不覆盖 Boss 原生界面；投递、聊天等操作仍在 Boss 内完成。</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button type="button" class="faq-q">我的数据和密钥安全吗？</button>
+            <div class="faq-a">
+              <p>LLM 请求由扩展<strong>后台（Service Worker）</strong>发起；侧栏不向网页脚本暴露你的 Key。正文链路中对手机号、邮箱、身份证等会做<strong>正则脱敏</strong>。请勿在侧栏粘贴银行卡密码等与求职无关的高度敏感信息。</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button type="button" class="faq-q">发现和 Boss 列表不一致怎么办？</button>
+            <div class="faq-a">
+              <p>筛选、排序或站内路由变化后若疑似错位，请<strong>重新单击</strong>目标职位卡片，并可在 Boss 页执行一次刷新，确保内容脚本就绪。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-cta">
+      <div class="container">
+        <div class="cta-panel">
+          <h2 class="cta-title">现在就把 joblens 装进 Chrome</h2>
+          <p class="cta-lead">从 GitHub 下载源码解压加载，或直接获取 Release 中的安装包——按 README 即可完成。</p>
+          <div class="cta-buttons">
+            <a class="btn btn-primary btn-lg" href="https://github.com/CC3441190-ux/joblens" target="_blank" rel="noopener noreferrer">前往 GitHub</a>
+            <a class="btn btn-white btn-lg" href="https://github.com/CC3441190-ux/joblens/releases/latest" target="_blank" rel="noopener noreferrer">下载 Release</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <div class="logo logo-light">joblens</div>
+        <p class="footer-desc">面向 Boss 直聘 Web 的 Chrome 求职侧栏助手。开源使用前请阅读仓库说明与免责声明。</p>
+      </div>
+      <div class="footer-col">
+        <div class="footer-heading">获取</div>
+        <a href="https://github.com/CC3441190-ux/joblens">GitHub 仓库</a>
+        <a href="https://github.com/CC3441190-ux/joblens/releases/latest">Release</a>
+        <a href="https://github.com/CC3441190-ux/joblens/blob/main/README.md">使用文档</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-heading">支持</div>
+        <a href="https://github.com/CC3441190-ux/joblens/issues" target="_blank" rel="noopener noreferrer">提交 Issue</a>
+        <a href="#faq">常见问题</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-heading">合规</div>
+        <p class="footer-legal">本工具与 Boss 直聘无隶属或合作关系，AI 建议不构成招聘或用工承诺。</p>
+      </div>
+    </div>
+    <div class="footer-bottom container">
+      <span>© <span id="y"></span> joblens · 软件许可证以仓库内文件为准（若未包含 LICENSE，请向维护者索取）</span>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    document.getElementById("y").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
